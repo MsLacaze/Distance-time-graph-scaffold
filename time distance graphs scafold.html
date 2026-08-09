@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Step-by-Step Graph Builder</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background: #f8fafc; color: #1e293b; }
+    h1 { color: #d97706; text-align: center; margin-bottom: 5px; }
+    p.subtitle { text-align: center; color: #64748b; margin-top: 0; }
+    
+    .container { max-width: 900px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+    
+    .step-box { background: #f1f5f9; border-left: 5px solid #d97706; padding: 15px; margin-bottom: 20px; border-radius: 0 8px 8px 0; }
+    .step-title { font-weight: bold; color: #b45309; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.5px; }
+    
+    /* Highlighter Toolbar */
+    .toolbar { display: flex; gap: 10px; margin-bottom: 10px; }
+    .tool-btn { padding: 6px 12px; border: 2px solid transparent; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85em; }
+    .tool-btn.active { border-color: #0f172a; }
+    .tool-yellow { background: #fef08a; color: #854d0e; }
+    .tool-blue { background: #bfdbfe; color: #1e40af; }
+    .tool-pink { background: #fbcfe8; color: #9d174d; }
+    
+    .story-text { font-size: 1.1em; line-height: 1.8; background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; user-select: text; }
+    .hl-yellow { background: #fef08a; }
+    .hl-blue { background: #bfdbfe; }
+    .hl-pink { background: #fbcfe8; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+    th, td { border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-size: 0.95em; }
+    th { background: #e2e8f0; }
+    input[type="number"] { width: 70px; padding: 6px; text-align: center; border: 1px solid #94a3b8; border-radius: 4px; font-size: 1em; }
+
+    .canvas-container { text-align: center; margin-top: 15px; }
+    canvas { background: #ffffff; border: 2px solid #64748b; border-radius: 6px; cursor: crosshair; }
+
+    .btn { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1em; margin-top: 10px; }
+    .btn:hover { background: #059669; }
+    .btn-secondary { background: #64748b; }
+    .btn-secondary:hover { background: #475569; }
+    
+    .feedback { font-weight: bold; margin-top: 10px; text-align: center; font-size: 1.05em; }
+    .success { color: #16a34a; }
+    .error { color: #dc2626; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <h1>Step-by-Step Distance–Time Graph Builder</h1>
+  <p class="subtitle">Complete each step to build your distance-time graph from scratch!</p>
+
+  <div class="container">
+    
+    <!-- STEP 1: INTERACTIVE HIGHLIGHTING -->
+    <div class="step-box">
+      <div class="step-title">Step 1: Color-Chunk the Story</div>
+      <p style="font-size: 0.9em;">Select a color tool below, then highlight text in the story to break it into stages!</p>
+      
+      <div class="toolbar">
+        <button class="tool-btn tool-yellow active" onclick="setTool('hl-yellow', this)">🟡 Moving Away</button>
+        <button class="tool-btn tool-blue" onclick="setTool('hl-blue', this)">🔵 Stopped / Resting</button>
+        <button class="tool-btn tool-pink" onclick="setTool('hl-pink', this)">💗 Moving Back</button>
+        <button class="tool-btn" style="background:#e2e8f0;" onclick="clearHighlight()">Clear Highlights</button>
+      </div>
+
+      <div class="story-text" id="storyBox" onmouseup="applyHighlight()">
+        Mia left home and walked 150 metres away in 3 minutes[cite: 1]. She realized she forgot her key and stopped completely for 2 minutes to search her backpack[cite: 1]. Then she walked 150 metres all the way back home in 3 minutes to grab her key[cite: 1].
+      </div>
+      <button class="btn" onclick="unlockStep2()">Done Highlighting -> Go to Step 2</button>
+    </div>
+
+    <!-- STEP 2: CUMULATIVE TABLE -->
+    <div class="step-box hidden" id="step2-box">
+      <div class="step-title">Step 2: Fill in Cumulative Coordinates</div>
+      <p style="font-size: 0.9em;">Add segment times together so time keeps moving forward!</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Stage</th>
+            <th>Segment Description</th>
+            <th>Total Time (minutes)</th>
+            <th>Distance from Home (metres)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Start</strong></td>
+            <td>At home starting out</td>
+            <td><strong>0</strong> min</td>
+            <td><strong>0</strong> m</td>
+          </tr>
+          <tr>
+            <td><strong>Stage 1</strong></td>
+            <td>Walked 150m away in 3 min[cite: 1]</td>
+            <td><input type="number" id="t1" placeholder="Time"> min</td>
+            <td><input type="number" id="d1" placeholder="Dist"> m</td>
+          </tr>
+          <tr>
+            <td><strong>Stage 2</strong></td>
+            <td>Stopped resting for 2 min[cite: 1]</td>
+            <td><input type="number" id="t2" placeholder="Time"> min</td>
+            <td><input type="number" id="d2" placeholder="Dist"> m</td>
+          </tr>
+          <tr>
+            <td><strong>Stage 3</strong></td>
+            <td>Walked 150m back in 3 min[cite: 1]</td>
+            <td><input type="number" id="t3" placeholder="Time"> min</td>
+            <td><input type="number" id="d3" placeholder="Dist"> m</td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="btn" onclick="checkTable()">Check Coordinates</button>
+      <div id="table-feedback" class="feedback"></div>
+    </div>
+
+    <!-- STEP 3: CANVAS PLOTTING -->
+    <div class="step-box hidden" id="step3-box">
+      <div class="step-title">Step 3: Plot Dots & Connect Lines</div>
+      <p style="font-size: 0.9em;">Click the grid intersections to plot your 4 dots (Start, Stage 1, Stage 2, Stage 3). The lines will connect automatically!</p>
+      
+      <div class="canvas-container">
+        <canvas id="graphCanvas" width="600" height="400"></canvas>
+      </div>
+      <div style="text-align: center; margin-top: 10px;">
+        <button class="btn btn-secondary" onclick="resetDots()">Reset Dots</button>
+        <button class="btn" onclick="checkGraph()">Check Graph Line</button>
+      </div>
+      <div id="graph-feedback" class="feedback"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // Highlighter Logic
+    let currentClass = 'hl-yellow';
+    function setTool(cls, btn) {
+      currentClass = cls;
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function applyHighlight() {
+      let sel = window.getSelection();
+      if (!sel.isCollapsed) {
+        let range = sel.getRangeAt(0);
+        let span = document.createElement('span');
+        span.className = currentClass;
+        range.surroundContents(span);
+        sel.removeAllRanges();
+      }
+    }
+
+    function clearHighlight() {
+      let story = document.getElementById('storyBox');
+      story.innerHTML = "Mia left home and walked 150 metres away in 3 minutes[cite: 1]. She realized she forgot her key and stopped completely for 2 minutes to search her backpack[cite: 1]. Then she walked 150 metres all the way back home in 3 minutes to grab her key[cite: 1].";
+    }
+
+    function unlockStep2() {
+      document.getElementById('step2-box').classList.remove('hidden');
+    }
+
+    // Table Validation Logic (Mia's Story: 3min/150m, 2min rest, 3min/back to 0m)
+    const correctCoords = { t1: 3, d1: 150, t2: 5, d2: 150, t3: 8, d3: 0 };
+
+    function checkTable() {
+      let t1 = parseInt(document.getElementById('t1').value);
+      let d1 = parseInt(document.getElementById('d1').value);
+      let t2 = parseInt(document.getElementById('t2').value);
+      let d2 = parseInt(document.getElementById('d2').value);
+      let t3 = parseInt(document.getElementById('t3').value);
+      let d3 = parseInt(document.getElementById('d3').value);
+
+      let fb = document.getElementById('table-feedback');
+
+      if (t1 === correctCoords.t1 && d1 === correctCoords.d1 &&
+          t2 === correctCoords.t2 && d2 === correctCoords.d2 &&
+          t3 === correctCoords.t3 && d3 === correctCoords.d3) {
+        fb.className = "feedback success";
+        fb.innerHTML = "✓ Perfect! Notice how Stage 2's total time reached 5 min (3 + 2). Now plot these dots below!";
+        document.getElementById('step3-box').classList.remove('hidden');
+        drawGrid();
+      } else {
+        fb.className = "feedback error";
+        fb.innerHTML = "x Check your cumulative times and distances!<br>Stage 1: (3 min, 150m)<br>Stage 2: (3+2 = 5 min, 150m)<br>Stage 3: (5+3 = 8 min, back at 0m home)";
+      }
+    }
+
+    // Clean Canvas Drawing Engine (Meters and Minutes only)
+    const cv = document.getElementById('graphCanvas');
+    const ctx = cv.getContext('2d');
+    let plottedPoints = [];
+
+    const margin = 55;
+    const maxX = 10;  // 10 Minutes
+    const maxY = 200; // 200 Metres
+
+    function drawGrid() {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      
+      // Grid lines
+      ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+      for (let x = 0; x <= 10; x++) {
+        let px = margin + x * (cv.width - 2 * margin) / maxX;
+        ctx.beginPath(); ctx.moveTo(px, margin); ctx.lineTo(px, cv.height - margin); ctx.stroke();
+        // X Labels
+        ctx.fillStyle = '#475569'; ctx.font = '12px sans-serif';
+        ctx.fillText(x, px - 3, cv.height - margin + 20);
+      }
+      for (let y = 0; y <= 200; y += 50) {
+        let py = (cv.height - margin) - y * (cv.height - 2 * margin) / maxY;
+        ctx.beginPath(); ctx.moveTo(margin, py); ctx.lineTo(cv.width - margin, py); ctx.stroke();
+        // Y Labels
+        ctx.fillText(y + "m", margin - 42, py + 4);
+      }
+
+      // Axes
+      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(margin, margin); ctx.lineTo(margin, cv.height - margin);
+      ctx.lineTo(cv.width - margin, cv.height - margin);
+      ctx.stroke();
+
+      // Axis Titles
+      ctx.fillStyle = '#0f172a'; ctx.font = 'bold 13px sans-serif';
+      ctx.fillText("Time (minutes)", cv.width / 2 - 40, cv.height - 10);
+      
+      ctx.save();
+      ctx.translate(15, cv.height / 2 + 40);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText("Distance (metres)", 0, 0);
+      ctx.restore();
+
+      // Draw Plotted Lines & Dots
+      if (plottedPoints.length > 0) {
+        ctx.strokeStyle = '#d97706'; ctx.lineWidth = 3; ctx.beginPath();
+        plottedPoints.forEach((p, i) => {
+          let px = margin + p.x * (cv.width - 2 * margin) / maxX;
+          let py = (cv.height - margin) - p.y * (cv.height - 2 * margin) / maxY;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+
+        plottedPoints.forEach(p => {
+          let px = margin + p.x * (cv.width - 2 * margin) / maxX;
+          let py = (cv.height - margin) - p.y * (cv.height - 2 * margin) / maxY;
+          ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
+        });
+      }
+    }
+
+    cv.addEventListener('click', e => {
+      if (plottedPoints.length >= 4) return;
+      
+      let rect = cv.getBoundingClientRect();
+      let clickX = e.clientX - rect.left;
+      let clickY = e.clientY - rect.top;
+
+      // Snap to nearest grid values
+      let gridX = Math.round(((clickX - margin) / (cv.width - 2 * margin)) * maxX);
+      let gridY = Math.round((((cv.height - margin) - clickY) / (cv.height - 2 * margin)) * maxY / 50) * 50;
+
+      gridX = Math.max(0, Math.min(maxX, gridX));
+      gridY = Math.max(0, Math.min(maxY, gridY));
+
+      plottedPoints.push({ x: gridX, y: gridY });
+      drawGrid();
+    });
+
+    function resetDots() {
+      plottedPoints = [];
+      document.getElementById('graph-feedback').innerHTML = "";
+      drawGrid();
+    }
+
+    function checkGraph() {
+      let fb = document.getElementById('graph-feedback');
+      let targetPoints = [{x:0, y:0}, {x:3, y:150}, {x:5, y:150}, {x:8, y:0}];
+
+      if (plottedPoints.length !== 4) {
+        fb.className = "feedback error";
+        fb.innerHTML = "x You need 4 dots: (0,0), Stage 1, Stage 2, and Stage 3!";
+        return;
+      }
+
+      let match = plottedPoints.every((pt, i) => pt.x === targetPoints[i].x && pt.y === targetPoints[i].y);
+
+      if (match) {
+        fb.className = "feedback success";
+        fb.innerHTML = "🎉 Fantastic job! You chunked the story, calculated coordinates, and built a full distance–time graph!";
+      } else {
+        fb.className = "feedback error";
+        fb.innerHTML = "x Points don't match your table. Dots should be at: (0,0), (3,150), (5,150), and (8,0). Click 'Reset Dots' to fix!";
+      }
+    }
+  </script>
+</body>
+</html>
